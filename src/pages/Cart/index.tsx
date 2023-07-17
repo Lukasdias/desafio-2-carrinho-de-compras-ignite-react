@@ -1,119 +1,240 @@
-import React from 'react';
 import {
-  MdDelete,
-  MdAddCircleOutline,
-  MdRemoveCircleOutline,
-} from 'react-icons/md';
+        MdAddCircleOutline,
+        MdDelete,
+        MdRemoveCircleOutline,
+} from "react-icons/md";
 
 // import { useCart } from '../../hooks/useCart';
 // import { formatPrice } from '../../util/format';
-import { Container, ProductTable, Total } from './styles';
+import { toast } from "react-toastify";
+import { useCart } from "../../hooks/useCart";
+import { formatPrice } from "../../util/format";
+import { Container, ProductTable, Total } from "./styles";
 
 interface Product {
-  id: number;
-  title: string;
-  price: number;
-  image: string;
-  amount: number;
+        id: number;
+        title: string;
+        price: number;
+        image: string;
+        amount: number;
 }
 
+interface ProductOnCartCardProps {
+        product: Product;
+        handleProductIncrement: (product: Product) => void;
+        handleProductDecrement: (product: Product) => void;
+        handleRemoveProduct: (productId: number) => void;
+}
+
+const ProductOnCartCard = (props: ProductOnCartCardProps) => {
+        return (
+                <ProductTable>
+                        <thead>
+                                <tr>
+                                        <th aria-label="product image" />
+                                        <th>PRODUTO</th>
+                                        <th>QTD</th>
+                                        <th>SUBTOTAL</th>
+                                        <th aria-label="delete icon" />
+                                </tr>
+                        </thead>
+                        <tbody>
+                                <tr data-testid="product">
+                                        <td>
+                                                <img
+                                                        src={
+                                                                props.product
+                                                                        .image
+                                                        }
+                                                        alt={
+                                                                props.product
+                                                                        .title
+                                                        }
+                                                />
+                                        </td>
+                                        <td>
+                                                <strong>
+                                                        {props.product.title}
+                                                </strong>
+                                                <span>
+                                                        {formatPrice(
+                                                                props.product
+                                                                        .price
+                                                        )}
+                                                </span>
+                                        </td>
+                                        <td>
+                                                <div>
+                                                        <button
+                                                                type="button"
+                                                                data-testid="decrement-product"
+                                                                disabled={
+                                                                        props
+                                                                                .product
+                                                                                .amount <=
+                                                                        1
+                                                                }
+                                                                onClick={() =>
+                                                                        props.handleProductDecrement(
+                                                                                props.product
+                                                                        )
+                                                                }
+                                                        >
+                                                                <MdRemoveCircleOutline
+                                                                        size={
+                                                                                20
+                                                                        }
+                                                                />
+                                                        </button>
+                                                        <input
+                                                                type="text"
+                                                                data-testid="product-amount"
+                                                                readOnly
+                                                                value={
+                                                                        props
+                                                                                .product
+                                                                                .amount
+                                                                }
+                                                        />
+                                                        <button
+                                                                type="button"
+                                                                data-testid="increment-product"
+                                                                onClick={() =>
+                                                                        props.handleProductIncrement(
+                                                                                props.product
+                                                                        )
+                                                                }
+                                                        >
+                                                                <MdAddCircleOutline
+                                                                        size={
+                                                                                20
+                                                                        }
+                                                                />
+                                                        </button>
+                                                </div>
+                                        </td>
+                                        <td>
+                                                <strong>
+                                                        {formatPrice(
+                                                                props.product
+                                                                        .price *
+                                                                        props
+                                                                                .product
+                                                                                .amount
+                                                        )}
+                                                </strong>
+                                        </td>
+                                        <td>
+                                                <button
+                                                        type="button"
+                                                        data-testid="remove-product"
+                                                        onClick={() =>
+                                                                props.handleRemoveProduct(
+                                                                        props
+                                                                                .product
+                                                                                .id
+                                                                )
+                                                        }
+                                                >
+                                                        <MdDelete size={20} />
+                                                </button>
+                                        </td>
+                                </tr>
+                        </tbody>
+                </ProductTable>
+        );
+};
+
 const Cart = (): JSX.Element => {
-  // const { cart, removeProduct, updateProductAmount } = useCart();
+        const { cart, removeProduct, updateProductAmount } = useCart();
 
-  // const cartFormatted = cart.map(product => ({
-  //   // TODO
-  // }))
-  // const total =
-  //   formatPrice(
-  //     cart.reduce((sumTotal, product) => {
-  //       // TODO
-  //     }, 0)
-  //   )
+        const total = formatPrice(
+                cart.reduce((sumTotal, product) => {
+                        sumTotal += product.price * product.amount;
+                        return sumTotal;
+                }, 0)
+        );
 
-  function handleProductIncrement(product: Product) {
-    // TODO
-  }
+        function handleProductIncrement(product: Product) {
+                if (product.amount === 0) {
+                        toast.error(
+                                "Não é possível adicionar uma quantidade menor que 1"
+                        );
+                        return;
+                }
+                updateProductAmount({
+                        productId: product.id,
+                        amount: product.amount + 1,
+                });
+        }
 
-  function handleProductDecrement(product: Product) {
-    // TODO
-  }
+        function handleProductDecrement(product: Product) {
+                if (product.amount === 0) {
+                        toast.error(
+                                "Não é possível reduzir uma quantidade menor que 1"
+                        );
+                        return;
+                }
+                updateProductAmount({
+                        productId: product.id,
+                        amount: product.amount - 1,
+                });
+        }
 
-  function handleRemoveProduct(productId: number) {
-    // TODO
-  }
+        function handleRemoveProduct(productId: number) {
+                if (!cart.find((product) => product.id === productId)) {
+                        toast.error(
+                                "Erro na remoção do produto, o produto não existe no carrinho"
+                        );
+                        return;
+                }
+                removeProduct(productId);
+        }
 
-  return (
-    <Container>
-      <ProductTable>
-        <thead>
-          <tr>
-            <th aria-label="product image" />
-            <th>PRODUTO</th>
-            <th>QTD</th>
-            <th>SUBTOTAL</th>
-            <th aria-label="delete icon" />
-          </tr>
-        </thead>
-        <tbody>
-          <tr data-testid="product">
-            <td>
-              <img src="https://rocketseat-cdn.s3-sa-east-1.amazonaws.com/modulo-redux/tenis1.jpg" alt="Tênis de Caminhada Leve Confortável" />
-            </td>
-            <td>
-              <strong>Tênis de Caminhada Leve Confortável</strong>
-              <span>R$ 179,90</span>
-            </td>
-            <td>
-              <div>
-                <button
-                  type="button"
-                  data-testid="decrement-product"
-                // disabled={product.amount <= 1}
-                // onClick={() => handleProductDecrement()}
-                >
-                  <MdRemoveCircleOutline size={20} />
-                </button>
-                <input
-                  type="text"
-                  data-testid="product-amount"
-                  readOnly
-                  value={2}
-                />
-                <button
-                  type="button"
-                  data-testid="increment-product"
-                // onClick={() => handleProductIncrement()}
-                >
-                  <MdAddCircleOutline size={20} />
-                </button>
-              </div>
-            </td>
-            <td>
-              <strong>R$ 359,80</strong>
-            </td>
-            <td>
-              <button
-                type="button"
-                data-testid="remove-product"
-              // onClick={() => handleRemoveProduct(product.id)}
-              >
-                <MdDelete size={20} />
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </ProductTable>
+        function submitOrder() {
+                if (cart.length === 0) {
+                        toast.error("Não é possível enviar um pedido vazio");
+                        return;
+                }
+                toast.success("Pedido enviado com sucesso!");
+        }
 
-      <footer>
-        <button type="button">Finalizar pedido</button>
+        return (
+                <Container>
+                        {cart.length === 0 ? (
+                                <> Carrinho Vazio </>
+                        ) : (
+                                <>
+                                        {cart?.map((product) => (
+                                                <ProductOnCartCard
+                                                        key={product.id}
+                                                        product={product}
+                                                        handleProductIncrement={
+                                                                handleProductIncrement
+                                                        }
+                                                        handleProductDecrement={
+                                                                handleProductDecrement
+                                                        }
+                                                        handleRemoveProduct={
+                                                                handleRemoveProduct
+                                                        }
+                                                />
+                                        ))}
+                                </>
+                        )}
 
-        <Total>
-          <span>TOTAL</span>
-          <strong>R$ 359,80</strong>
-        </Total>
-      </footer>
-    </Container>
-  );
+                        <footer>
+                                <button type="button" onClick={submitOrder}>
+                                        Finalizar pedido
+                                </button>
+
+                                <Total>
+                                        <span>TOTAL</span>
+                                        <strong>{total}</strong>
+                                </Total>
+                        </footer>
+                </Container>
+        );
 };
 
 export default Cart;
